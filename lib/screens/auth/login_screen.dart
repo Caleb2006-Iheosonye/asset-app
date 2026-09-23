@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
-
+import 'package:email_validator/email_validator.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -12,6 +12,20 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool visibility = false;
+   bool isEmailValid(String email) {
+      return EmailValidator.validate(email);
+    }
+  final emailController = TextEditingController();
+final passwordController = TextEditingController();
+@override
+  void dispose() {
+ 
+    emailController.dispose();
+    passwordController.dispose();
+    // ignore: avoid_print
+
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     // Grab the theme's colors and text styles once, use them below.
@@ -65,7 +79,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextField(
+                    TextFormField(
+                  
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.mail_outline),
                     filled: true,
@@ -77,6 +95,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     hintText: 'Enter your email',
                   ),
+                  // Auto validate the email field when the user interacts with it
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email cannot be empty';
+                    } else if (!isEmailValid(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null; // Return null if the email is valid
+                  },
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -206,6 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 14,
                         ),
                       ),
+                       onTap: () {Navigator.pushNamed(context, '/signup');},
                     ),
                   ],
                 ),
