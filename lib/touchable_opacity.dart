@@ -20,18 +20,26 @@ class TouchableOpacity extends StatefulWidget {
 
 class _TouchableOpacityState extends State<TouchableOpacity> {
   bool isDown = false;
+  bool isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => isDown = true),
-      onTapUp: (_) => setState(() => isDown = false),
-      onTapCancel: () => setState(() => isDown = false),
-      onTap: widget.onTap,
-      child: AnimatedOpacity(
-        duration: widget.duration,
-        opacity: isDown ? widget.opacity : 1,
-        child: widget.child,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => isDown = true),
+        onTapUp: (_) => setState(() => isDown = false),
+        onTapCancel: () => setState(() => isDown = false),
+        onTap: widget.onTap,
+        child: AnimatedOpacity(
+          duration: widget.duration,
+          opacity: isDown
+              ? widget.opacity
+              : (isHovered ? (widget.opacity + 1) / 2 : 1),
+          child: widget.child,
+        ),
       ),
     );
   }
