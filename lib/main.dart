@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
+import 'screens/auth/otp_screen.dart';
 import 'theme/app_theme.dart';
 void main() => runApp(const MyApp());
 
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
      
   '/login': (context) => const LoginScreen(),
   '/signup': (context) => const SignupScreen(),
-
+  '/otp': (context) => const OTPScreen(),
 
   },
     );

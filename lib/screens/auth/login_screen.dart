@@ -1,8 +1,10 @@
+import 'package:asset_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 import 'package:email_validator/email_validator.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -12,20 +14,22 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool visibility = false;
-   bool isEmailValid(String email) {
-      return EmailValidator.validate(email);
-    }
+  bool isEmailValid(String email) {
+    return EmailValidator.validate(email);
+  }
+
+  String password = '';
   final emailController = TextEditingController();
-final passwordController = TextEditingController();
-@override
+  final passwordController = TextEditingController();
+  @override
   void dispose() {
- 
     emailController.dispose();
     passwordController.dispose();
     // ignore: avoid_print
 
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     // Grab the theme's colors and text styles once, use them below.
@@ -79,11 +83,10 @@ final passwordController = TextEditingController();
                   ),
                 ),
                 const SizedBox(height: 8),
-                    TextFormField(
-                  
+                TextFormField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  
+
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.mail_outline),
                     filled: true,
@@ -116,7 +119,13 @@ final passwordController = TextEditingController();
                 ),
                 const SizedBox(height: 8),
                 TextField(
-                  obscureText: visibility,
+                  controller: passwordController,
+                  obscureText: !visibility,
+                  onChanged: (value) {
+                    setState(() {
+                      password = value;
+                    });
+                  },
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
@@ -169,7 +178,33 @@ final passwordController = TextEditingController();
                       ),
                     ),
                   ),
-                  onTap: () {},
+                  onTap: () async {
+                         showDialog(
+                      context: context,
+                      builder: (context) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+                    final result = await AuthService.login(
+                      email: emailController.text,
+                      password: passwordController.text,
+                    );
+
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context); // close loading dialog
+                    if (result['success'] == true) {
+                      Navigator.pushNamed(
+                        context,
+                        '/signup',
+                      ); // or wherever login lands
+                    } else {
+                      final errorMessage =
+                          result['data']?['error'] ?? 'Something went wrong';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(errorMessage.toString())),
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -234,7 +269,9 @@ final passwordController = TextEditingController();
                           fontSize: 14,
                         ),
                       ),
-                       onTap: () {Navigator.pushNamed(context, '/signup');},
+                      onTap: () {
+                        Navigator.pushNamed(context, '/signup');
+                      },
                     ),
                   ],
                 ),

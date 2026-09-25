@@ -3,14 +3,20 @@ import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'package:http/http.dart' as http;
+import 'package:asset_app/screens/auth/screen_arguments.dart'; // adjust path to wherever ScreenArguments is defined
+
+//import 'dart:convert';
+
+import 'package:asset_app/services/auth_service.dart';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
+
 
 class _SignupScreenState extends State<SignupScreen> {
   bool visibility = false;
@@ -42,36 +48,13 @@ class _SignupScreenState extends State<SignupScreen> {
     print('Dispose used');
     super.dispose();
   }
-  Future<void> signUp({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    
-    final response = await http.post(
-      Uri.parse('http://localhost:3000/api/auth/signup'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'password': password,
-      }),
-    );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      // navigate or show success
-      print('Signup successful: ${response.body}');
-    } else {
-      // show error
-      print('Signup failed: ${response.body}');
-    }
-  }
   @override
   Widget build(BuildContext context) {
     // Grab the theme's colors and text styles once, use them below.
 
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme; //
     final extraColors = Theme.of(context).extension<AppExtraColors>()!;
 
     return Scaffold(
@@ -83,27 +66,9 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 48),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    TouchableOpacity(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.chevron_left,
-                          size: 48,
-
-                          //color: colors.onPrimary,
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/login');
-                      },
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, size: 48),
+                  onPressed: () => Navigator.pushNamed(context, '/otp'),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -275,7 +240,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                   ),
-                  onTap: () async { {
+                  onTap: () async {
                     if (nameController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -285,14 +250,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       return;
                     } else if (!isEmailValid(emailController.text)) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Please enter a valid email address.'),
                         ),
                       );
                       return;
                     } else if (passwordStrength < 4) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text(
                             'Password is too weak. Please make it stronger.',
                           ),
@@ -301,28 +266,58 @@ class _SignupScreenState extends State<SignupScreen> {
                       return;
                     } else if (!terms) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text(
                             'You must agree to the Terms and Conditions.',
                           ),
                         ),
                       );
                       return;
-                    } else {
-                      final name = nameController.text;
-                      final email = emailController.text;
-                      final pass = passwordController.text;
-                        showDialog(
-      context: context,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-                       await signUp(name: name, email: email, password: pass);
                     }
 
-                    /* */
-                  }},
+                    final name = nameController.text;
+                    final email = emailController.text;
+                    final pass = passwordController.text;
+
+                    showDialog(
+                      context: context,
+                      builder: (context) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+
+                    final result = await AuthService.signUp(
+                      name: name,
+                      email: email,
+                      password: pass,
+                    );
+
+                    if (!context.mounted)
+                      return; // guard #1 — right after the await
+
+                    Navigator.pop(context); // close loading dialog
+
+                    if (result['success'] == true) {
+                      if (!context.mounted)
+                        return; // guard #2 — right before this context use
+                  Navigator.pushNamed(
+                        context,
+                        '/otp',
+                        arguments: ScreenArguments(
+                          name: name,
+                          email: email,
+                          password: pass,
+                        ),
+                      );
+                    } else {
+                      if (!context.mounted)
+                        return; // guard #3 — right before this context use
+                      final errorMessage =
+                          result['data']?['error'] ?? 'Something went wrong';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(errorMessage.toString())),
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 Row(
