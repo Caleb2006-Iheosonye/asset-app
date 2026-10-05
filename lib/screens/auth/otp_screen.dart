@@ -43,7 +43,9 @@ class _OTPScreenState extends State<OTPScreen> {
     }
 
     final args = rawArgs;
-    final name = args.name;
+    final type = args.type;
+    final firstName = args.firstName;
+    final lastName = args.lastName;
     final email = args.email;
     final password = args.password;
     final defaultPinTheme = PinTheme(
@@ -72,11 +74,11 @@ class _OTPScreenState extends State<OTPScreen> {
                 const SizedBox(height: 48),
                 IconButton(
                   icon: const Icon(Icons.chevron_left, size: 48),
-                  onPressed: () => Navigator.pushNamed(context, '/signup'),
+                  onPressed: () => Navigator.pop(context),
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Verify your email',
+                  type == 'signup' ? 'Verify your email' : 'Enter reset code',
                   style: textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 24,
@@ -173,13 +175,67 @@ class _OTPScreenState extends State<OTPScreen> {
                   onTap: () async {
                     if (formKey.currentState?.validate() ?? false) {
                       // If the form is valid, navigate to the next screen
-                      final result = await AuthService.verifyOtp(
-                        email: email,
-                        token: pinController.text,
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) =>
+                            const Center(child: CircularProgressIndicator()),
                       );
+                      Map<String, dynamic>? result;
+                      try {
+                        result = await AuthService.verifyOtp(
+                          email: email,
+                          token: pinController.text,
+                          type: type,
+                        );
+                      } catch (e) {
+                        result = null;
+                      } finally {
+                        if (context.mounted)
+                          Navigator.pop(context); // close dialog
+                      }
+
                       if (!context.mounted) return;
-                      if (result['success'] == true) {
+                      if (result == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Network error. Try again.'),
+                          ),
+                        );
+                        return;
+                      }
+                      if (!context.mounted) return;
+                      if (result['success'] == true && type == 'signup') {
                         Navigator.pushNamed(context, '/login');
+                      } else if (result['success'] == true &&
+                          type == 'recovery') {
+                        //recovery: pull the session tokens out of the response
+                        final session = result['data']?['data']?['session'];
+                        final accessToken = session?['access_token'];
+                        final refreshToken = session?['refresh_token'];
+
+                        if (accessToken == null || refreshToken == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not start a reset session.'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/updatePass',
+                          arguments: ScreenArguments(
+                            type: type,
+                            firstName: '',
+                            lastName: '',
+                            email: email,
+                            password: '',
+                            accessToken: accessToken,
+                            refreshToken: refreshToken,
+                          ),
+                        );
                       } else {
                         final errorMessage =
                             result['data']?['error'] ?? 'Something went wrong';
@@ -216,25 +272,90 @@ class _OTPScreenState extends State<OTPScreen> {
                         ),
                       ),
                       onTap: () async {
-                        final result = await AuthService.signUp(
-                          name: name,
-                          email: email,
-                          password: password,
-                        );
-
-                        if (!context.mounted) return;
-
-                        if (result['success'] == true) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Code resent.')),
+                        if (type == 'signup') {
+                          showDialog(
+                            context: context,
+                              barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           );
-                        } else {
-                          final errorMessage =
-                              result['data']?['error'] ??
-                              'Something went wrong';
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(errorMessage.toString())),
+
+                          Map<String, dynamic> result;
+                          try {
+                            result = await AuthService.signUp(
+                              firstName: firstName,
+                              lastName: lastName,
+                              email: email,
+                              password: password,
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            Navigator.pop(context); // close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Network error. Try again.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (!context.mounted) return;
+                          Navigator.pop(context); // close loading dialog
+                          if (result['success'] == true) {
+                            pinController.clear();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Code resent.')),
+                            );
+                          } else {
+                            final errorMessage =
+                                result['data']?['error'] ??
+                                'Something went wrong';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage.toString())),
+                            );
+                          }
+                        } else if (type == 'recovery') {
+                          showDialog(
+                            context: context,
+                              barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           );
+
+                          Map<String, dynamic> result;
+                          try {
+                            result = await AuthService.forgetpass(
+                              email: email,
+                             
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            Navigator.pop(context); // close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Network error. Try again.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (!context.mounted) return;
+                          Navigator.pop(context); // close loading dialog
+                          if (result['success'] == true) {
+                            pinController.clear();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Code resent.')),
+                            );
+                          } else {
+                            final errorMessage =
+                                result['data']?['error'] ??
+                                'Something went wrong';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage.toString())),
+                            );
+                          }
                         }
                       },
                     ),

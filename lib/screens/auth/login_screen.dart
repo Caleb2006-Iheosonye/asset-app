@@ -4,6 +4,7 @@ import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +12,7 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
+
 
 class _LoginScreenState extends State<LoginScreen> {
   bool visibility = false;
@@ -36,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final extraColors = Theme.of(context).extension<AppExtraColors>()!;
+       final extraColors = Theme.of(context).extension<AppExtraColors>()!;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -157,6 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 14,
                         ),
                       ),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/forgetPass');
+                      },
                     ),
                   ],
                 ),
@@ -179,8 +184,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onTap: () async {
-                         showDialog(
+                    showDialog(
                       context: context,
+                      barrierDismissible: false,
                       builder: (context) =>
                           const Center(child: CircularProgressIndicator()),
                     );
@@ -233,7 +239,85 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     Buttons.google,
-                    onPressed: () {},
+
+                    onPressed: () async {
+                      String? idToken;
+
+                      // 1. Open Google's account picker and get the ID token
+                      try {
+                        final account = await GoogleSignIn.instance
+                            .authenticate();
+                        idToken = account.authentication.idToken;
+                      } on GoogleSignInException catch (e) {
+                        if (e.code == GoogleSignInExceptionCode.canceled)return; // user closed the picker
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Google sign-in failed'),
+                          ),
+                        );
+                        return;
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Google sign-in failed'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      // 2. Make sure we actually got a token
+                      if (idToken == null || idToken.isEmpty) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to authenticate user.'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      // 3. Spinner only for the backend call
+                      if (!context.mounted) return;
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      Map<String, dynamic> result;
+                      try {
+                        result = await AuthService.googleSignIn(
+                          idToken: idToken,
+                        );
+                      } catch (_) {
+                        result = {
+                          'success': false,
+                          'data': {
+                            'error': 'Could not reach the server. Try again.',
+                          },
+                        };
+                      }
+
+                      if (!context.mounted) return;
+                      Navigator.pop(context); // close spinner
+
+                      // 4. Same handling as the password login
+                      if (result['success'] == true) {
+                        Navigator.pushNamed(
+                          context,
+                          '/signup',
+                        ); // TODO: change to your home route
+                      } else {
+                        final errorMessage =
+                            result['data']?['error'] ?? 'Something went wrong';
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(errorMessage.toString())),
+                        );
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),

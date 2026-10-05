@@ -17,7 +17,6 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-
 class _SignupScreenState extends State<SignupScreen> {
   bool visibility = false;
   bool terms = false;
@@ -36,12 +35,14 @@ class _SignupScreenState extends State<SignupScreen> {
     return strength; // 0-4
   }
 
-  final nameController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   @override
   void dispose() {
-    nameController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     // ignore: avoid_print
@@ -65,12 +66,12 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 IconButton(
                   icon: const Icon(Icons.chevron_left, size: 48),
                   onPressed: () => Navigator.pushNamed(context, '/otp'),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Text(
                   'Create your account',
                   style: textTheme.headlineMedium?.copyWith(
@@ -88,28 +89,74 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Full name',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.person_outline),
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.outline),
-                    ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // label, gap, field go here
+                          Text(
+                            'First name',
+                            style: TextStyle(
+                              color: colors.onSurfaceVariant,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: firstNameController,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.person_outline),
+                              filled: true,
+                              fillColor: colors.surface,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colors.outline),
+                              ),
 
-                    hintText: 'Enter your full name',
-                  ),
+                              hintText: 'Enter your first name',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // gap goes here
+                    const SizedBox(width: 8),
+                    // second Expanded goes here
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // label, gap, field go here
+                          Text(
+                            'Last name',
+                            style: TextStyle(
+                              color: colors.onSurfaceVariant,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: lastNameController,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.person_outline),
+                              filled: true,
+                              fillColor: colors.surface,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colors.outline),
+                              ),
+
+                              hintText: 'Enter your last name',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+
                 const SizedBox(height: 16),
                 Text(
                   'Email',
@@ -241,10 +288,17 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   onTap: () async {
-                    if (nameController.text.trim().isEmpty) {
+                    if (firstNameController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Please enter your full name.'),
+                          content: Text('Please enter your first name.'),
+                        ),
+                      );
+                      return;
+                    } else if (lastNameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter your last name.'),
                         ),
                       );
                       return;
@@ -275,18 +329,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       return;
                     }
 
-                    final name = nameController.text;
+                    final firstName = firstNameController.text;
+                    final lastName = lastNameController.text;
                     final email = emailController.text;
                     final pass = passwordController.text;
 
                     showDialog(
                       context: context,
+                      barrierDismissible: false,
                       builder: (context) =>
                           const Center(child: CircularProgressIndicator()),
                     );
 
                     final result = await AuthService.signUp(
-                      name: name,
+                      firstName: firstName,
+                      lastName: lastName,
                       email: email,
                       password: pass,
                     );
@@ -299,11 +356,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (result['success'] == true) {
                       if (!context.mounted)
                         return; // guard #2 — right before this context use
-                  Navigator.pushNamed(
+                      Navigator.pushNamed(
                         context,
                         '/otp',
                         arguments: ScreenArguments(
-                          name: name,
+                          type: 'signup',
+                          firstName: firstName,
+                          lastName: lastName,
                           email: email,
                           password: pass,
                         ),
