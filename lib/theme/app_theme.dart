@@ -3,16 +3,18 @@ import 'app_colors.dart';
 
 // Holds the colors that ColorScheme has no slot for (gain, accentText).
 class AppExtraColors extends ThemeExtension<AppExtraColors> {
-  const AppExtraColors({required this.gain, required this.accentText});
+  const AppExtraColors({required this.gain,required this.gainBg, required this.accentText});
 
   final Color gain;
   final Color accentText;
+  final Color gainBg;
 
   // Flutter requires these two methods. Copy them as they are.
   @override
-  AppExtraColors copyWith({Color? gain, Color? accentText}) {
+  AppExtraColors copyWith({Color? gain,Color? gainBg, Color? accentText}) {
     return AppExtraColors(
       gain: gain ?? this.gain,
+      gainBg: gainBg ?? this.gainBg,
       accentText: accentText ?? this.accentText,
     );
   }
@@ -22,6 +24,7 @@ class AppExtraColors extends ThemeExtension<AppExtraColors> {
     if (other is! AppExtraColors) return this;
     return AppExtraColors(
       gain: Color.lerp(gain, other.gain, t)!,
+      gainBg: Color.lerp(gainBg, other.gainBg, t)!,
       accentText: Color.lerp(accentText, other.accentText, t)!,
     );
   }
@@ -48,6 +51,7 @@ class AppTheme {
     extensions: const [
       AppExtraColors(
         gain: DarkColors.gain,
+        gainBg: DarkColors.gainBg,
         accentText: DarkColors.accentText,
       ),
     ],
@@ -76,6 +80,7 @@ class AppTheme {
     extensions: const [
       AppExtraColors(
         gain: LightColors.gain,
+        gainBg: LightColors.gainBg,
         accentText: LightColors.accentText,
       ),
     ],

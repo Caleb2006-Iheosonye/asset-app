@@ -11,7 +11,9 @@ class DarkColors {
   static const accent = Color(0xFFFCD535);
   static const accentText = Color(0xFFFCD535);
   static const gain = Color(0xFF0ECB81);
+  static const gainBg = Color(0x240ECB81);
   static const loss = Color(0xFFF6465D);
+  static const lossBg = Color(0x24F6465D);
 }
 
 class LightColors {
@@ -24,5 +26,7 @@ class LightColors {
   static const accent = Color(0xFFFCD535);
   static const accentText = Color(0xFF8A6A00);
   static const gain = Color(0xFF078A55);
+   static const gainBg = Color(0x1A0ECB81);
   static const loss = Color(0xFFD9304A);
+  static const lossBg = Color(0x1AF6465D);
 }

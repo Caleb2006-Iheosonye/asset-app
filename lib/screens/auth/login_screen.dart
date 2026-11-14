@@ -5,7 +5,7 @@ import 'package:asset_app/theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:go_router/go_router.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -199,10 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     Navigator.pop(context); // close loading dialog
                     if (result['success'] == true) {
-                      Navigator.pushNamed(
-                        context,
-                        '/signup',
-                      ); // or wherever login lands
+                   Navigator.pushNamed(context, '/home_page');// or wherever login lands
                     } else {
                       final errorMessage =
                           result['data']?['error'] ?? 'Something went wrong';
@@ -306,10 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // 4. Same handling as the password login
                       if (result['success'] == true) {
-                        Navigator.pushNamed(
-                          context,
-                          '/signup',
-                        ); // TODO: change to your home route
+                        Navigator.pushNamed(context, '/home_page');// TODO: change to your home route
                       } else {
                         final errorMessage =
                             result['data']?['error'] ?? 'Something went wrong';

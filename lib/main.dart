@@ -1,13 +1,15 @@
 import 'screens/auth/forgetpass_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-
+import 'screens/pages/addAsset_page.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/otp_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/updatepass.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'components/app_shell.dart';
+import 'screens/pages/home_page.dart';
 
 Future<void> main() async {
 WidgetsFlutterBinding.ensureInitialized();
@@ -33,13 +35,18 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: LoginScreen(),
+      home: AppShell(initialIndex: 0),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/otp': (context) => const OTPScreen(),
         '/forgetPass': (context) => const ForgetPassScreen(),
         '/updatePass': (context) => const UpdatePassScreen(),
+        '/home_page': (context) => const AppShell(initialIndex: 0),
+        '/assets_page': (context) => const AppShell(initialIndex: 1),
+        '/reports_page': (context) => const AppShell(initialIndex: 2),
+        '/profile_page': (context) => const AppShell(initialIndex: 3),
+        '/add_asset':(context) => const AddAsset()
       },
     );
   }

@@ -149,7 +149,7 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
                     ),
                   ],
                   Text(
-                    'Use 8 or more characters with a number.',
+                    'Use 8 or more characters with a number and special character.',
                     style: TextStyle(
                       color: colors.onSurfaceVariant,
                       fontSize: 14,
@@ -193,7 +193,7 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
                       ),
                       hintText: 'Confirm password',
                     ),
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                  //  autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Confirm your password';
@@ -224,7 +224,7 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
                     ),
                     onTap: () async {
                       final pass = passwordController.text;
-                      if (pass.length < 8 || !pass.contains(RegExp(r'[0-9]'))) {
+                      if (pass.length < 8 || !pass.contains(RegExp(r'[0-9]')) || !pass.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(

@@ -167,6 +167,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
 
