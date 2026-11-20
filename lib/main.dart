@@ -9,7 +9,7 @@ import 'theme/app_theme.dart';
 import 'screens/auth/updatepass.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'components/app_shell.dart';
-import 'screens/pages/home_page.dart';
+
 
 Future<void> main() async {
 WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +46,8 @@ class MyApp extends StatelessWidget {
         '/assets_page': (context) => const AppShell(initialIndex: 1),
         '/reports_page': (context) => const AppShell(initialIndex: 2),
         '/profile_page': (context) => const AppShell(initialIndex: 3),
-        '/add_asset':(context) => const AddAsset()
+        '/add_asset':(context) => const AddAsset(),
+      
       },
     );
   }

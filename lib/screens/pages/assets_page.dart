@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:asset_app/touchable_opacity.dart';
+import 'package:asset_app/screens/pages/detailPage.dart';
 import 'package:flutter/cupertino.dart';
 
 class AssetsScreen extends StatefulWidget {
@@ -28,6 +29,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '18.2',
       'quantity': '60 shares',
       'Color': const Color(0xFF7F77DD),
+      'category': 'Stocks',
+      'ticker': 'AAPL',
+      'gainAmount': '1,909.00',
+      'pricePaid': '\$174.85 per share',
+      'totalCost': '\$10,491.00',
+      'dateAdded': '12 Mar 2025',
+      'notes': 'Long term hold',
     },
     {
       'name': 'Bitcoin',
@@ -37,6 +45,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '4.1',
       'quantity': '0.1500 BTC',
       'Color': const Color(0xFFF7931A),
+      'category': 'Crypto',
+      'ticker': 'BTC',
+      'gainAmount': '421.00',
+      'pricePaid': '\$68,473.33 per BTC',
+      'totalCost': '\$10,271.00',
+      'dateAdded': '03 Jun 2025',
+      'notes': 'Bought on a dip, waiting for recovery',
     },
     {
       'name': 'Treasury bond fund',
@@ -46,6 +61,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '3.6',
       'quantity': '50 Units',
       'Color': const Color(0xFF0ECB81),
+      'category': 'Bonds',
+      'ticker': 'TBF',
+      'gainAmount': '174.00',
+      'pricePaid': '\$96.52 per unit',
+      'totalCost': '\$4,826.00',
+      'dateAdded': '20 Jan 2025',
+      'notes': 'Low risk allocation',
     },
     {
       'name': 'Savings account',
@@ -55,15 +77,29 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '1.2',
       'quantity': 'USD',
       'Color': const Color(0xFF848E9C),
+      'category': 'Cash',
+      'ticker': 'USD',
+      'gainAmount': '59.00',
+      'pricePaid': '\$4,941.00 deposited',
+      'totalCost': '\$4,941.00',
+      'dateAdded': '05 Jan 2025',
+      'notes': 'Emergency fund',
     },
     {
-      'name': 'Microsoft,Corporate bond',
+      'name': 'Microsoft',
       'icon': CupertinoIcons.briefcase,
       'GainLoss': Icons.arrow_drop_up,
       'value': '4,200.00',
       'percent': '9.4',
       'quantity': '10 shares',
       'Color': const Color(0xFF7F77DD),
+      'category': 'Stocks',
+      'ticker': 'MSFT',
+      'gainAmount': '361.00',
+      'pricePaid': '\$383.90 per share',
+      'totalCost': '\$3,839.00',
+      'dateAdded': '28 Apr 2025',
+      'notes': 'Add more on pullbacks',
     },
     {
       'name': 'Corporate bond',
@@ -73,6 +109,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '2.8',
       'quantity': '30 units',
       'Color': const Color(0xFF0ECB81),
+      'category': 'Bonds',
+      'ticker': 'CORP',
+      'gainAmount': '81.90',
+      'pricePaid': '\$97.27 per unit',
+      'totalCost': '\$2,918.10',
+      'dateAdded': '15 Feb 2025',
+      'notes': 'Matures in 2029',
     },
     {
       'name': 'Nvidia',
@@ -82,6 +125,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'percent': '31.5',
       'quantity': '20 shares',
       'Color': const Color(0xFF7F77DD),
+      'category': 'Stocks',
+      'ticker': 'NVDA',
+      'gainAmount': '635.00',
+      'pricePaid': '\$100.75 per share',
+      'totalCost': '\$2,015.00',
+      'dateAdded': '09 Sep 2024',
+      'notes': 'High growth, review quarterly',
     },
   ];
 
@@ -182,7 +232,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: listCategories.length,
                     separatorBuilder: (context, index) =>
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 16),
                     itemBuilder: (context, index) {
                       final isSelected = selectedIndex == index;
 
@@ -239,6 +289,15 @@ class _AssetsScreenState extends State<AssetsScreen> {
                   itemCount: data.length,
                   itemBuilder: (BuildContext context, int index) {
                     return ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                detailPage(asset: data[index]),
+                          ),
+                        );
+                      },
                       leading: Container(
                         width: 56,
                         height: 56,

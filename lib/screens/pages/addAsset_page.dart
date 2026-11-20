@@ -105,7 +105,7 @@ class _AddAssetState extends State<AddAsset> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: listCategories.length,
                             separatorBuilder: (context, index) =>
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 16),
                             itemBuilder: (context, index) {
                               final isSelected = selectedIndex == index;
 
