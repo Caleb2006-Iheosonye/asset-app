@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
-import 'package:sign_in_button/sign_in_button.dart';
+import 'package:asset_app/components/app_widgets.dart';
 import 'package:email_validator/email_validator.dart';
-//import 'package:http/http.dart' as http;
-import 'package:asset_app/screens/auth/screen_arguments.dart'; // adjust path to wherever ScreenArguments is defined
-
-//import 'dart:convert';
-
+import 'package:asset_app/services/screen_arguments.dart';
 import 'package:asset_app/services/auth_service.dart';
+import 'package:asset_app/services/google_sign_in_flow.dart';
+import 'package:sign_in_button/sign_in_button.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,135 +18,153 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   bool visibility = false;
   bool terms = false;
-  bool isEmailValid(String email) {
-    return EmailValidator.validate(email);
-  }
+  bool isEmailValid(String email) => EmailValidator.validate(email);
 
-  String password = '';
-  int passwordStrength = 0; // 0 = none, 1 = weak, 2 = medium, 3 = strong
+  int passwordStrength = 0; // 0 to 4
   int calculateStrength(String password) {
     int strength = 0;
     if (password.length >= 8) strength++;
     if (password.contains(RegExp(r'[A-Z]'))) strength++;
     if (password.contains(RegExp(r'[0-9]'))) strength++;
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
-    return strength; // 0-4
+    return strength;
   }
 
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
   @override
   void dispose() {
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    // ignore: avoid_print
-    print('Dispose used');
     super.dispose();
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (firstNameController.text.trim().isEmpty) {
+      _snack('Please enter your first name.');
+      return;
+    } else if (lastNameController.text.trim().isEmpty) {
+      _snack('Please enter your last name.');
+      return;
+    } else if (!isEmailValid(emailController.text)) {
+      _snack('Please enter a valid email address.');
+      return;
+    } else if (passwordStrength < 4) {
+      _snack('Password is too weak. Please make it stronger.');
+      return;
+    } else if (!terms) {
+      _snack('You must agree to the Terms of Use and Privacy Policy.');
+      return;
+    }
+
+    final firstName = firstNameController.text;
+    final lastName = lastNameController.text;
+    final email = emailController.text;
+    final pass = passwordController.text;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final result = await AuthService.signUp(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: pass,
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context); // close loading dialog
+
+    if (result['success'] == true) {
+      Navigator.pushNamed(
+        context,
+        '/otp',
+        arguments: ScreenArguments(
+          type: 'signup',
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          password: pass,
+        ),
+      );
+    } else {
+      _snack((result['data']?['error'] ?? 'Something went wrong').toString());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Grab the theme's colors and text styles once, use them below.
-
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme; //
+    final textTheme = Theme.of(context).textTheme;
     final extraColors = Theme.of(context).extension<AppExtraColors>()!;
+    final linkStyle = TextStyle(color: extraColors.accentText);
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 24),
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, size: 48),
-                  onPressed: () => Navigator.pushNamed(context, '/otp'),
-                ),
-                const SizedBox(height: 24),
+                const AuthBackButton(),
+                const SizedBox(height: 4),
                 Text(
                   'Create your account',
                   style: textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 24,
-                    color: colors.onSurface,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'Track every asset in one place.',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // label, gap, field go here
-                          Text(
-                            'First name',
-                            style: TextStyle(
-                              color: colors.onSurfaceVariant,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const FieldLabel('First name'),
                           TextField(
                             controller: firstNameController,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.person_outline),
-                              filled: true,
-                              fillColor: colors.surface,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.outline),
-                              ),
-
-                              hintText: 'Enter your first name',
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.person_outline, size: 18),
+                              hintText: 'First name',
                             ),
                           ),
                         ],
                       ),
                     ),
-                    // gap goes here
-                    const SizedBox(width: 8),
-                    // second Expanded goes here
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // label, gap, field go here
-                          Text(
-                            'Last name',
-                            style: TextStyle(
-                              color: colors.onSurfaceVariant,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const FieldLabel('Last name'),
                           TextField(
                             controller: lastNameController,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.person_outline),
-                              filled: true,
-                              fillColor: colors.surface,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: colors.outline),
-                              ),
-
-                              hintText: 'Enter your last name',
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.person_outline, size: 18),
+                              hintText: 'Last name',
                             ),
                           ),
                         ],
@@ -156,33 +172,15 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-                Text(
-                  'Email',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const FieldLabel('Email'),
                 TextFormField(
-                  
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.mail_outline),
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.outline),
-                    ),
-
-                    hintText: 'Enter your email',
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.mail_outline, size: 18),
+                    hintText: 'name@example.com',
                   ),
-                  // Auto validate the email field when the user interacts with it
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -190,203 +188,81 @@ class _SignupScreenState extends State<SignupScreen> {
                     } else if (!isEmailValid(value)) {
                       return 'Please enter a valid email';
                     }
-                    return null; // Return null if the email is valid
+                    return null;
                   },
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Password',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const FieldLabel('Password'),
                 TextFormField(
                   controller: passwordController,
                   obscureText: !visibility,
                   onChanged: (value) {
-                    setState(() {
-                      password = value;
-                      passwordStrength = calculateStrength(value);
-                    });
+                    setState(() => passwordStrength = calculateStrength(value));
                   },
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline, size: 18),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        visibility ? Icons.visibility : Icons.visibility_off,
+                        visibility
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 18,
                       ),
                       onPressed: () => setState(() => visibility = !visibility),
-                    ),
-
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.outline),
                     ),
                     hintText: 'Enter your password',
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (password.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: passwordStrength / 4,
-                    backgroundColor: colors.surface,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      passwordStrength <= 1
-                          ? Colors.red
-                          : passwordStrength == 2
-                          ? Colors.orange
-                          : passwordStrength == 3
-                          ? Colors.yellow
-                          : Colors.green,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
+                StrengthBar(strength: passwordStrength),
+                const SizedBox(height: 6),
+                Text(
+                  'Use 8 or more characters with a number.',
+                  style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+                ),
+                const SizedBox(height: 18),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       height: 20,
                       width: 20,
                       child: Checkbox(
                         value: terms,
-                        activeColor: colors.secondary,
-                        onChanged: (value) {
-                          setState(() => terms = value ?? false);
-                        },
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        onChanged: (v) => setState(() => terms = v ?? false),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "I agree to the Terms and Conditions",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.onSurfaceVariant,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.onSurfaceVariant,
+                          ),
+                          children: [
+                            const TextSpan(text: 'I agree to the '),
+                            TextSpan(text: 'Terms of Use', style: linkStyle),
+                            const TextSpan(text: ' and '),
+                            TextSpan(text: 'Privacy Policy', style: linkStyle),
+                            const TextSpan(text: '.'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                TouchableOpacity(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Create account',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  ),
-                  onTap: () async {
-                    if (firstNameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your first name.'),
-                        ),
-                      );
-                      return;
-                    } else if (lastNameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your last name.'),
-                        ),
-                      );
-                      return;
-                    } else if (!isEmailValid(emailController.text)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid email address.'),
-                        ),
-                      );
-                      return;
-                    } else if (passwordStrength < 4) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Password is too weak. Please make it stronger.',
-                          ),
-                        ),
-                      );
-                      return;
-                    } else if (!terms) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'You must agree to the Terms and Conditions.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
-                    final firstName = firstNameController.text;
-                    final lastName = lastNameController.text;
-                    final email = emailController.text;
-                    final pass = passwordController.text;
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) =>
-                          const Center(child: CircularProgressIndicator()),
-                    );
-
-                    final result = await AuthService.signUp(
-                      firstName: firstName,
-                      lastName: lastName,
-                      email: email,
-                      password: pass,
-                    );
-
-                    if (!context.mounted)
-                      return; // guard #1 — right after the await
-
-                    Navigator.pop(context); // close loading dialog
-
-                    if (result['success'] == true) {
-                      if (!context.mounted)
-                        return; // guard #2 — right before this context use
-                      Navigator.pushNamed(
-                        context,
-                        '/otp',
-                        arguments: ScreenArguments(
-                          type: 'signup',
-                          firstName: firstName,
-                          lastName: lastName,
-                          email: email,
-                          password: pass,
-                        ),
-                      );
-                    } else {
-                      if (!context.mounted)
-                        return; // guard #3 — right before this context use
-                      final errorMessage =
-                          result['data']?['error'] ?? 'Something went wrong';
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(errorMessage.toString())),
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 22),
+                AppButton(label: 'Create account', onTap: _submit),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     Expanded(child: Divider(color: colors.outline)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
-                        "Or",
+                        'or',
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.onSurfaceVariant,
@@ -396,8 +272,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     Expanded(child: Divider(color: colors.outline)),
                   ],
                 ),
-
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 SizedBox(
                   height: 48,
                   width: double.infinity,
@@ -406,36 +281,33 @@ class _SignupScreenState extends State<SignupScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     Buttons.google,
-                    onPressed: () {},
+                    onPressed: () => googleSignInFlow(context),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-
                   children: [
                     Text(
-                      "Already have an account?",
+                      'Already have an account? ',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: colors.onSurfaceVariant,
                       ),
                     ),
                     TouchableOpacity(
+                      onTap: () => Navigator.pushNamed(context, '/login'),
                       child: Text(
-                        //textAlign: TextAlign.end,
-                        ' Log in',
+                        'Log in',
                         style: TextStyle(
                           color: extraColors.accentText,
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                       ),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/login');
-                      },
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

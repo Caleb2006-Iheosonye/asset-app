@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:asset_app/touchable_opacity.dart';
 import 'package:asset_app/theme/app_theme.dart';
-
-//import 'package:email_validator/email_validator.dart';
-//import 'package:http/http.dart' as http;
-import 'package:asset_app/screens/auth/screen_arguments.dart'; // adjust path to wherever ScreenArguments is defined
-
-//import 'dart:convert';
-
+import 'package:asset_app/components/app_widgets.dart';
+import 'package:asset_app/services/screen_arguments.dart';
 import 'package:asset_app/services/auth_service.dart';
 
 class UpdatePassScreen extends StatefulWidget {
@@ -20,21 +14,20 @@ class UpdatePassScreen extends StatefulWidget {
 class _UpdatePassScreenState extends State<UpdatePassScreen> {
   final formKey = GlobalKey<FormState>();
   bool visibility = false;
-  bool conVisibilty = false;
-  String password = '';
-  String updatePass = '';
-  int passwordStrength = 0; // 0 = none, 1 = weak, 2 = medium, 3 = strong
+  int passwordStrength = 0; // 0 to 4
+
   int calculateStrength(String password) {
     int strength = 0;
     if (password.length >= 8) strength++;
     if (password.contains(RegExp(r'[A-Z]'))) strength++;
     if (password.contains(RegExp(r'[0-9]'))) strength++;
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
-    return strength; // 0-4
+    return strength;
   }
 
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
   @override
   void dispose() {
     passwordController.dispose();
@@ -42,13 +35,59 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
     super.dispose();
   }
 
+  void _snack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _reset(String accessToken, String refreshToken) async {
+    final pass = passwordController.text;
+    if (pass.length < 8 ||
+        !pass.contains(RegExp(r'[0-9]')) ||
+        !pass.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      _snack('Use 8 or more characters with a number and a special character.');
+      return;
+    }
+    if (!formKey.currentState!.validate()) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    Map<String, dynamic>? result;
+    try {
+      result = await AuthService.updatePassword(
+        newPassword: pass,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+    } catch (e) {
+      result = null;
+    } finally {
+      if (mounted) Navigator.pop(context);
+    }
+
+    if (!mounted) return;
+    if (result == null) {
+      _snack('Network error. Try again.');
+      return;
+    }
+
+    if (result['success'] == true) {
+      _snack('Password updated. Please log in.');
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } else {
+      _snack((result['data']?['error'] ?? 'Something went wrong').toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Grab the theme's colors and text styles once, use them below.
-    
-
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme; //
+    final textTheme = Theme.of(context).textTheme;
     final rawArgs = ModalRoute.of(context)!.settings.arguments;
     if (rawArgs is! ScreenArguments) {
       return const Scaffold(
@@ -62,138 +101,81 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
         body: Center(child: Text('Reset session missing. Please start again.')),
       );
     }
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Form(
               key: formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, size: 48),
-                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                  AuthBackButton(
+                    onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 4),
                   Text(
                     'Set new password',
                     style: textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       fontSize: 24,
-                      color: colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    "Choose a new password for your account.",
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'New password',
+                    'Choose a new password for your account.',
                     style: TextStyle(
                       color: colors.onSurfaceVariant,
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
+                  const FieldLabel('New password'),
                   TextFormField(
                     controller: passwordController,
                     obscureText: !visibility,
                     onChanged: (value) {
-                      setState(() {
-                        password = value;
-                        passwordStrength = calculateStrength(value);
-                      });
+                      setState(() => passwordStrength = calculateStrength(value));
                     },
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline, size: 18),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          visibility ? Icons.visibility : Icons.visibility_off,
+                          visibility
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 18,
                         ),
                         onPressed: () =>
                             setState(() => visibility = !visibility),
                       ),
-
-                      filled: true,
-                      fillColor: colors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.outline),
-                      ),
                       hintText: 'Enter your password',
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  if (password.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: passwordStrength / 4,
-                      backgroundColor: colors.surface,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        passwordStrength <= 1
-                            ? Colors.red
-                            : passwordStrength == 2
-                            ? Colors.orange
-                            : passwordStrength == 3
-                            ? Colors.yellow
-                            : Colors.green,
-                      ),
-                    ),
-                  ],
+                  StrengthBar(strength: passwordStrength),
+                  const SizedBox(height: 6),
                   Text(
-                    'Use 8 or more characters with a number and special character.',
+                    'Use 8 or more characters with a number.',
                     style: TextStyle(
+                      fontSize: 12,
                       color: colors.onSurfaceVariant,
-                      fontSize: 14,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-                  Text(
-                    'Confirm password',
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const FieldLabel('Confirm password'),
                   TextFormField(
                     controller: confirmPasswordController,
-                    obscureText: !conVisibilty,
-                    onChanged: (value) {
-                      setState(() {
-                        updatePass = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          conVisibilty
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () =>
-                            setState(() => conVisibilty = !conVisibilty),
-                      ),
-
-                      filled: true,
-                      fillColor: colors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.outline),
-                      ),
+                    obscureText: !visibility,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.lock_outline, size: 18),
                       hintText: 'Confirm password',
                     ),
-                  //  autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Confirm your password';
@@ -204,88 +186,12 @@ class _UpdatePassScreenState extends State<UpdatePassScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                  TouchableOpacity(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        'Reset password',
-                        style: textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.onPrimary,
-                        ),
-                      ),
-                    ),
-                    onTap: () async {
-                      final pass = passwordController.text;
-                      if (pass.length < 8 || !pass.contains(RegExp(r'[0-9]')) || !pass.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Use 8 or more characters with a number.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                      if (!formKey.currentState!.validate()) return;
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) =>
-                            const Center(child: CircularProgressIndicator()),
-                      );
-
-                      Map<String, dynamic>? result;
-                      try {
-                        result = await AuthService.updatePassword(
-                          newPassword: pass,
-                          accessToken: accessToken,
-                          refreshToken: refreshToken,
-                        );
-                      } catch (e) {
-                        result = null;
-                      } finally {
-                        if (context.mounted) Navigator.pop(context);
-                      }
-
-                      if (!context.mounted) return;
-                      if (result == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Network error. Try again.'),
-                          ),
-                        );
-                        return;
-                      }
-
-                      if (result['success'] == true) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Password updated. Please log in.'),
-                          ),
-                        );
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/login',
-                          (route) => false,
-                        );
-                      } else {
-                        final errorMessage =
-                            result['data']?['error'] ?? 'Something went wrong';
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(errorMessage.toString())),
-                        );
-                      }
-                    },
+                  const SizedBox(height: 22),
+                  AppButton(
+                    label: 'Reset password',
+                    onTap: () => _reset(accessToken, refreshToken),
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

@@ -11,7 +11,7 @@ class ProfileScreen extends StatefulWidget {
 
 class ProfileScreenState extends State<ProfileScreen> {
   // Display switches
-  static const bool showIcons = false;
+  static const bool showIcons = true; // the design shows leading icons
   static const bool showChevrons = true;
   static const bool showDividers = true;
 
@@ -37,60 +37,66 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    // Kept so your theme extension stays available on this screen
-    // ignore: unused_local_variable
-    final extraColors = Theme.of(context).extension<AppExtraColors>()!;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: 56,
         title: const Text('Profile'),
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications_none, size: 22),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 // Header
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: colors.primary,
+                    Container(
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        shape: BoxShape.circle,
+                      ),
                       child: Text(
                         _initials(fullName, username),
-                        style: textTheme.headlineMedium?.copyWith(
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
                           color: colors.onPrimary,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             fullName,
-                            style: textTheme.headlineSmall?.copyWith(
-                              color: colors.onSurface,
+                            style: const TextStyle(
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
                             email,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodyMedium?.copyWith(
+                            style: TextStyle(
+                              fontSize: 13,
                               color: colors.onSurfaceVariant,
                             ),
                           ),
@@ -102,19 +108,18 @@ class ProfileScreenState extends State<ProfileScreen> {
                         // Handle edit profile action
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
+                        height: 32,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           'Edit',
-                          style: textTheme.labelLarge?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -122,26 +127,24 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Stat cards
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _statCard(colors, textTheme, '11', 'Assets'),
+                      _statCard(colors, '11', 'Assets'),
                       const SizedBox(width: 8),
-                      _statCard(colors, textTheme, '4', 'Categories'),
+                      _statCard(colors, '4', 'Categories'),
                       const SizedBox(width: 8),
-                      _statCard(colors, textTheme, 'Jan 2025', 'Member since'),
+                      _statCard(colors, 'Jan 2025', 'Member since'),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 32),
-
                 // Account
-                _sectionLabel('Account', textTheme, colors),
+                _sectionLabel('Account', colors),
                 _settingsRow(
                   icon: Icons.person_outline,
                   title: 'Personal details',
@@ -164,10 +167,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                   onTap: () {},
                 ),
 
-                const SizedBox(height: 24),
-
-                // Preferences
-                _sectionLabel('Preferences', textTheme, colors),
+                // Preferences, with the appearance switch under Currency
+                _sectionLabel('Preferences', colors),
                 _settingsRow(
                   icon: Icons.language,
                   title: 'Currency',
@@ -175,16 +176,22 @@ class ProfileScreenState extends State<ProfileScreen> {
                   colors: colors,
                   onTap: () {},
                 ),
-
-                const SizedBox(height: 24),
-
-                // Appearance
-                _sectionLabel('Appearance', textTheme, colors),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'Appearance',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: colors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(16),
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: List.generate(themeOptions.length, (i) {
@@ -193,22 +200,23 @@ class ProfileScreenState extends State<ProfileScreen> {
                         child: TouchableOpacity(
                           onTap: () => setState(() => themeIndex = i),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: selected
                                   ? colors.primary
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               themeOptions[i],
                               style: TextStyle(
+                                fontSize: 13,
                                 color: selected
                                     ? colors.onPrimary
                                     : colors.onSurfaceVariant,
                                 fontWeight: selected
-                                    ? FontWeight.w600
+                                    ? FontWeight.w500
                                     : FontWeight.normal,
                               ),
                             ),
@@ -219,10 +227,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
                 // Data
-                _sectionLabel('Data', textTheme, colors),
+                _sectionLabel('Data', colors),
                 _settingsRow(
                   icon: Icons.download_outlined,
                   title: 'Export assets as CSV',
@@ -248,50 +254,39 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _statCard(
-    ColorScheme colors,
-    TextTheme textTheme,
-    String top,
-    String bottom,
-  ) {
+  Widget _statCard(ColorScheme colors, String top, String bottom) {
     return Expanded(
-      child: Card(
-        color: colors.surfaceContainer,
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                top,
-                textAlign: TextAlign.center,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                bottom,
-                textAlign: TextAlign.center,
-                style: textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              top,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              bottom,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _sectionLabel(String text, TextTheme textTheme, ColorScheme colors) {
+  Widget _sectionLabel(String text, ColorScheme colors) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(top: 22, bottom: 4),
       child: Text(
         text,
-        style: textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+        style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
       ),
     );
   }
@@ -317,31 +312,27 @@ class ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         width: double.infinity,
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
             if (showIcons) ...[
-              Icon(icon, color: color ?? colors.onSurfaceVariant),
-              const SizedBox(width: 16),
+              Icon(icon, size: 20, color: color ?? colors.onSurfaceVariant),
+              const SizedBox(width: 12),
             ],
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(
-                  color: contentColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 14, color: contentColor),
               ),
             ),
             if (value != null)
               Text(
                 value,
-                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 15),
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
               ),
             if (showChevrons && showChevron) ...[
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right, color: colors.onSurfaceVariant),
+              Icon(Icons.chevron_right, size: 18, color: colors.onSurfaceVariant),
             ],
           ],
         ),

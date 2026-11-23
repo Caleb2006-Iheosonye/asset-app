@@ -1,98 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:asset_app/theme/app_theme.dart';
-import 'package:asset_app/touchable_opacity.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:asset_app/theme/app_colors.dart';
+import 'package:asset_app/touchable_opacity.dart';
+import 'package:asset_app/components/app_widgets.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
+  static const _tabular = [FontFeature.tabularFigures()];
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final extraColors = Theme.of(context).extension<AppExtraColors>()!;
-    final List<String> entries = <String>[
-      'Apple Inc',
-      'Bitcoin',
-      'Treasury bond fund',
-    ];
-    final List<IconData> iconVar = <IconData>[
-      CupertinoIcons.briefcase,
-      Icons.currency_bitcoin,
-      Icons.account_balance_outlined,
-    ];
-    final List<IconData> gainLoss = <IconData>[
-      Icons.arrow_drop_up,
-      Icons.arrow_drop_down,
-      Icons.arrow_drop_up,
-    ];
-    final List<String> addedDate = <String>[
-      '12 Mar 2025',
-      '2 Feb 2025',
-      '20 Jan 2025',
-    ];
-    final List<String> entriesValue = <String>[
-      '12,400.00',
-      '9,850.00',
-      '5,000.00',
-    ];
-    final List<String> entriesPercent = <String>['18.2', '4.1', '3.6'];
-    final List<Color> containerColor = <Color>[
-      const Color(0xFF7F77DD),
-      const Color(0xFFF7931A),
-      const Color(0xFF0ECB81),
-      const Color(0xFF848E9C),
-    ];
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: 56,
+        leadingWidth: 52,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: TouchableOpacity(
-            onTap: () {
-              // Handle avatar tap (e.g., open profile or drawer)
-            },
-            child: CircleAvatar(
-              radius: 18,
-
-              backgroundColor: colors.primary,
-              child: Text('C'),
-              // Or use AssetImage('assets/profile.jpg') for local images
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: TouchableOpacity(
+              onTap: () {
+                // Handle avatar tap (e.g. open profile)
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  'C',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onPrimary,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-        titleSpacing: 8,
-
+        titleSpacing: 10,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Welcome back',
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
-            ),
-            Text(
-              'Caleb',
               style: TextStyle(
-                color: colors.onSurface,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                color: colors.onSurfaceVariant,
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
               ),
+            ),
+            const Text(
+              'Caleb',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              // handle the press
-            },
+            icon: const Icon(Icons.search, size: 20),
+            onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // handle the press
-            },
+            icon: const Icon(Icons.notifications_none, size: 20),
+            onPressed: () {},
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -101,18 +81,15 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
+                const SizedBox(height: 8),
+                // Net worth card
                 SizedBox(
                   width: double.infinity,
                   child: Card(
-                    color: colors.surfaceContainer,
-                    //borderOnForeground: true,
-                    //semanticContainer: true,
                     child: Padding(
-                      padding: EdgeInsets.all(16.0), // Padding inside the card
+                      padding: const EdgeInsets.all(16),
                       child: Column(
-                        //mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
@@ -124,11 +101,13 @@ class HomeScreen extends StatelessWidget {
                                   fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.visibility, size: 18),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.visibility_outlined,
+                                size: 16,
+                                color: colors.onSurfaceVariant,
                               ),
-                              Spacer(),
+                              const Spacer(),
                               Text(
                                 'Updated 9:41 AM',
                                 style: TextStyle(
@@ -138,37 +117,28 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Text(
-                            "\$48,250.00",
+                          const SizedBox(height: 4),
+                          const Text(
+                            '\$48,250.00',
                             style: TextStyle(
-                              color: colors.onSurface,
                               fontSize: 32,
                               fontWeight: FontWeight.w600,
+                              fontFeatures: _tabular,
                             ),
                           ),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
-                              Card(
-                                color: extraColors.gainBg,
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_drop_up,
-                                        color: extraColors.gain,
-                                      ),
-                                      Text("15.3% total gain"),
-                                    ],
+                              const GainPill(up: true, text: '15.3% total gain'),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Text(
+                                  '\$6,420.00 since purchase',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: colors.onSurfaceVariant,
+                                    fontSize: 12,
                                   ),
-                                ),
-                              ),
-                              Spacer(),
-                              Text(
-                                "\$6,420 since purchase",
-                                style: TextStyle(
-                                  color: colors.onSurfaceVariant,
-                                  fontSize: 13,
                                 ),
                               ),
                             ],
@@ -178,287 +148,168 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                const SectionHeader('Categories', action: 'Manage'),
                 Row(
                   children: [
-                    Text('Categories'),
-                    Spacer(),
-                    TouchableOpacity(
-                      child: Text(
-                        //textAlign: TextAlign.end,
-                        ' Manage',
-                        style: TextStyle(
-                          color: extraColors.accentText,
-                          fontSize: 14,
-                        ),
+                    Expanded(
+                      child: _CategoryTile(
+                        name: 'Stocks',
+                        icon: CupertinoIcons.briefcase,
+                        color: CategoryColors.stocks,
+                        value: '\$20,750',
+                        percent: 43,
+                        count: 4,
                       ),
-                      onTap: () {
-                        //Navigator.pushNamed(context, '/');
-                      },
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _CategoryTile(
+                        name: 'Crypto',
+                        icon: Icons.currency_bitcoin,
+                        color: CategoryColors.crypto,
+                        value: '\$12,550',
+                        percent: 26,
+                        count: 3,
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
-                      child: Card(
-                        color: colors.surfaceContainer,
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            16.0,
-                          ), // Padding inside the card
-                          child: Column(
-                            //mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Stocks"),
-                              Text("\$20,750"),
-                              Row(
-                                children: [
-                                  Text("43% of total"),
-                                  Spacer(),
-
-                                  Text("4 assets"),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: 20750 / 48250,
-                                backgroundColor: colors.surface,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  containerColor[0],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _CategoryTile(
+                        name: 'Bonds',
+                        icon: Icons.account_balance_outlined,
+                        color: CategoryColors.bonds,
+                        value: '\$8,000',
+                        percent: 17,
+                        count: 2,
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Card(
-                        color: colors.surfaceContainer,
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            16.0,
-                          ), // Padding inside the card
-                          child: Column(
-                            //mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Crypto"),
-                              Text("\$12,550"),
-                              Row(
-                                children: [
-                                  Text("26% of total"),
-                                  Spacer(),
-
-                                  Text("3 assets"),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: 12550 / 48250,
-                                backgroundColor: colors.surface,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  containerColor[1],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _CategoryTile(
+                        name: 'Cash',
+                        icon: Icons.money_outlined,
+                        color: CategoryColors.cash,
+                        value: '\$6,950',
+                        percent: 14,
+                        count: 2,
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        color: colors.surfaceContainer,
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            16.0,
-                          ), // Padding inside the card
-                          child: Column(
-                            //mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Bonds"),
-                              Text("\$8,000"),
-                              Row(
-                                children: [
-                                  Text("17% of total"),
-                                  Spacer(),
-
-                                  Text(" 2 assets"),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: 8000 / 48250,
-                                backgroundColor: colors.surface,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  containerColor[2],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Card(
-                        color: colors.surfaceContainer,
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            16.0,
-                          ), // Padding inside the card
-                          child: Column(
-                            //mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Cash"),
-                              Text("\$6,950"),
-                              Row(
-                                children: [
-                                  Text("14% of total"),
-                                  Spacer(),
-
-                                  Text(" 2 assets"),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: 6950 / 48250,
-                                backgroundColor: colors.surface,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  containerColor[3],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SectionHeader('Recently added', action: 'View all'),
+                // Plain rows, no list builder: the last one has no divider.
+                const AssetRow(
+                  name: 'Apple Inc',
+                  subtitle: 'Added 12 Mar 2025',
+                  value: '\$12,400.00',
+                  up: true,
+                  percent: '18.2%',
+                  color: CategoryColors.stocks,
+                  icon: CupertinoIcons.briefcase,
                 ),
-                Row(
-                  children: [
-                    Text('Recently added'),
-                    Spacer(),
-                    TouchableOpacity(
-                      child: Text(
-                        //textAlign: TextAlign.end,
-                        'View all',
-                        style: TextStyle(
-                          color: extraColors.accentText,
-                          fontSize: 14,
-                        ),
-                      ),
-                      onTap: () {
-                        //Navigator.pushNamed(context, '/');
-                      },
-                    ),
-                  ],
+                const AssetRow(
+                  name: 'Bitcoin',
+                  subtitle: 'Added 2 Feb 2025',
+                  value: '\$9,850.00',
+                  up: false,
+                  percent: '4.1%',
+                  color: CategoryColors.crypto,
+                  icon: Icons.currency_bitcoin,
                 ),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(8),
-                  itemCount: entries.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      leading: Container(
-                        width: 56,
-                        height: 56,
-
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: (containerColor[index % containerColor.length])
-                              .withOpacity(0.5),
-
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          iconVar[index % iconVar.length],
-                          size: 32,
-                          color:
-                              (containerColor[index % containerColor.length]),
-                        ),
-                      ),
-
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entries[index],
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'Added ${addedDate[index]}',
-                            style: TextStyle(
-                              color: colors.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\$${entriesValue[index % entriesValue.length]}',
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                gainLoss[index % gainLoss.length],
-                                color:
-                                    gainLoss[index % gainLoss.length] ==
-                                        Icons.arrow_drop_up
-                                    ? extraColors.gain
-                                    : colors.error,
-                              ),
-                              Text(
-                                '${entriesPercent[index % entriesPercent.length]}%',
-                                style: TextStyle(
-                                  color:
-                                      gainLoss[index % gainLoss.length] ==
-                                          Icons.arrow_drop_up
-                                      ? extraColors.gain
-                                      : colors.error,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  separatorBuilder: (context, int index) {
-                    return const SizedBox(
-                      height: 1.0,
-                      width: double.infinity,
-                      child: ColoredBox(color: Color(0xFF000000)),
-                    );
-                  },
+                const AssetRow(
+                  name: 'Treasury bond fund',
+                  subtitle: 'Added 20 Jan 2025',
+                  value: '\$5,000.00',
+                  up: true,
+                  percent: '3.6%',
+                  color: CategoryColors.bonds,
+                  icon: Icons.account_balance_outlined,
+                  showDivider: false,
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.name,
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.percent,
+    required this.count,
+  });
+
+  final String name;
+  final IconData icon;
+  final Color color;
+  final String value;
+  final int percent;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final muted12 = TextStyle(color: colors.onSurfaceVariant, fontSize: 12);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CategoryBadge(color: color, icon: icon, size: 30, square: true),
+              const SizedBox(width: 8),
+              Text(
+                name,
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  '$percent% of total',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: muted12,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text('$count assets', maxLines: 1, style: muted12),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ThinBar(value: percent / 100, color: color),
+        ],
       ),
     );
   }

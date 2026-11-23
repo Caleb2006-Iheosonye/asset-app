@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:asset_app/theme/app_theme.dart';
 import 'package:asset_app/touchable_opacity.dart';
+import 'package:asset_app/components/app_widgets.dart';
 
 class detailPage extends StatefulWidget {
   final Map<String, dynamic> asset;
@@ -24,6 +25,9 @@ class _detailPageState extends State<detailPage> {
     'All': [0.70, 0.74, 0.72, 0.80, 0.78, 0.86, 0.90, 0.93, 0.97, 1.0],
   };
 
+  // The design shows the singular form in the sub header ("Stock, AAPL").
+  static const _singular = {'Stocks': 'Stock', 'Bonds': 'Bond'};
+
   Map<String, dynamic> get asset => widget.asset;
   bool get isGain => asset['GainLoss'] == Icons.arrow_drop_up;
 
@@ -43,12 +47,12 @@ class _detailPageState extends State<detailPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(asset.keys.toString());
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final extraColors = Theme.of(context).extension<AppExtraColors>()!;
     final trendColor = isGain ? extraColors.gain : colors.error;
     final assetColor = asset['Color'] as Color;
+    final category = (asset['category'] as String?) ?? 'Asset';
+    final categoryLabel = _singular[category] ?? category;
 
     final details = <MapEntry<String, String>>[
       MapEntry('Category', asset['category'] ?? 'N/A'),
@@ -62,141 +66,119 @@ class _detailPageState extends State<detailPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: 52,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.chevron_left, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
           asset['name'] as String,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.more_horiz), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.more_horiz, size: 20),
+            onPressed: () {},
+          ),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: assetColor.withValues(alpha: 0.25),
-                    child: Icon(
-                      asset['icon'] as IconData,
-                      size: 16,
-                      color: assetColor,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${asset['category'] ?? 'Asset'}, ${asset['ticker'] ?? ''}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '\$${asset['value']}',
-                style: textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: trendColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isGain ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                          size: 20,
-                          color: trendColor,
-                        ),
-                        Text(
-                          '${asset['percent']}%',
-                          style: TextStyle(
-                            color: trendColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          CategoryBadge(
+                            color: assetColor,
+                            icon: asset['icon'] as IconData,
+                            size: 24,
                           ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$categoryLabel, ${asset['ticker'] ?? ''}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '\$${asset['value']}',
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: [FontFeature.tabularFigures()],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          GainPill(up: isGain, text: '${asset['percent']}%'),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              '\$${asset['gainAmount'] ?? '0.00'} ${isGain ? 'gain' : 'loss'} since purchase',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.onSurfaceVariant,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      AspectRatio(
+                        aspectRatio: 308 / 130,
+                        child: _chart(trendColor),
+                      ),
+                      const SizedBox(height: 8),
+                      _rangeSelector(colors),
+                      const SizedBox(height: 14),
+                      for (int i = 0; i < details.length; i++)
+                        _detailRow(
+                          details[i].key,
+                          details[i].value,
+                          colors,
+                          last: i == details.length - 1,
+                        ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '\$${asset['gainAmount'] ?? '0.00'} ${isGain ? 'gain' : 'loss'} since purchase',
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      fontSize: 13,
-                    ),
+                ),
+              ),
+            ),
+            // Buttons stay pinned to the bottom, as in the design.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppButton(
+                    label: 'Edit asset',
+                    icon: Icons.edit_outlined,
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  AppButton(
+                    label: 'Delete asset',
+                    style: AppButtonStyle.danger,
+                    onTap: () {},
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              SizedBox(height: 160, child: _chart(trendColor)),
-              const SizedBox(height: 16),
-              _rangeSelector(colors),
-              const SizedBox(height: 16),
-              for (int i = 0; i < details.length; i++) ...[
-                _detailRow(details[i].key, details[i].value, colors),
-                if (i != details.length - 1)
-                  Divider(height: 1, color: colors.outlineVariant),
-              ],
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit asset'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: const Size.fromHeight(54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.error,
-                    side: BorderSide(color: colors.error),
-                    minimumSize: const Size.fromHeight(54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Delete asset'),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -216,16 +198,28 @@ class _detailPageState extends State<detailPage> {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
             spots: points,
             isCurved: false,
             color: lineColor,
             barWidth: 2,
-            dotData: const FlDotData(show: false),
+            // Only the last point gets a dot, like the design.
+            dotData: FlDotData(
+              show: true,
+              checkToShowDot: (spot, barData) =>
+                  spot.x == barData.spots.last.x,
+              getDotPainter: (spot, percent, barData, index) =>
+                  FlDotCirclePainter(
+                    radius: 4,
+                    color: lineColor,
+                    strokeWidth: 0,
+                  ),
+            ),
             belowBarData: BarAreaData(
               show: true,
-              color: lineColor.withValues(alpha: 0.15),
+              color: lineColor.withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -241,16 +235,19 @@ class _detailPageState extends State<detailPage> {
         return TouchableOpacity(
           onTap: () => setState(() => selectedIndex = i),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: selected ? colors.surfaceContainerHighest : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+              color: selected
+                  ? colors.surfaceContainerHighest
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               ranges[i],
               style: TextStyle(
+                fontSize: 13,
                 color: selected ? colors.onSurface : colors.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+                fontWeight: selected ? FontWeight.w500 : FontWeight.normal,
               ),
             ),
           ),
@@ -259,18 +256,33 @@ class _detailPageState extends State<detailPage> {
     );
   }
 
-  Widget _detailRow(String label, String value, ColorScheme colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+  Widget _detailRow(
+    String label,
+    String value,
+    ColorScheme colors, {
+    required bool last,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: last
+          ? null
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+            ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: colors.onSurfaceVariant)),
           Text(
-            value,
-            style: TextStyle(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w500,
+            label,
+            style: TextStyle(fontSize: 14, color: colors.onSurfaceVariant),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],

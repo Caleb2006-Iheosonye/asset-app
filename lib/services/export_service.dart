@@ -36,31 +36,32 @@ class ExportService {
 
     double total = 0;
 
-    for (final item in allocation) {
-      final name = item['name'] as String;
-      final value = double.tryParse(_plain(item['value'])) ?? 0;
-      total += value;
+   for (final item in allocation) {
+  final name = item['name'] as String;
+  final value = double.tryParse(_plain(item['value'])) ?? 0;
+  total += value;
 
-      // Find the matching gain entry, if there is one.
-      final gain = gains.firstWhere(
-        (g) => g['name'] == name,
-        orElse: () => <String, dynamic>{},
-      );
+  // Find the matching gain entry, if there is one.
+  final gain = gains.firstWhere(
+    (g) => g['name'] == name,
+    orElse: () => <String, dynamic>{},
+  );
+  final hasGain = gain.isNotEmpty;
 
-      final hasGain = gain.isNotEmpty;
-      final sign = (hasGain && gain['GainLoss'] == Icons.arrow_drop_down)
-          ? '-'
-          : '';
+  final gainAmount = hasGain ? (gain['amount'] as num).toDouble() : 0.0;
+  final gainPercent = hasGain
+      ? _plain(gain['percent']).replaceAll('%', '')
+      : '';
 
-      rows.add([
-        period,
-        name,
-        value.toStringAsFixed(2),
-        _plain(item['percent']),
-        hasGain ? '$sign${_plain(gain['value'])}' : '',
-        hasGain ? '$sign${_plain(gain['percent'])}' : '',
-      ]);
-    }
+  rows.add([
+    period,
+    name,
+    value.toStringAsFixed(2),
+    _plain(item['percent']),
+    hasGain ? gainAmount.toStringAsFixed(2) : '',
+    gainPercent,
+  ]);
+}
 
     rows.add([period, 'Total', total.toStringAsFixed(2), '', '', '']);
 

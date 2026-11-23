@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asset_app/theme/app_theme.dart';
-import 'package:asset_app/touchable_opacity.dart';
-
+import 'package:asset_app/components/app_widgets.dart';
 class AddAsset extends StatefulWidget {
   const AddAsset({Key? key}) : super(key: key);
 
@@ -18,6 +16,13 @@ class _AddAssetState extends State<AddAsset> {
   final unitPriceController = TextEditingController();
   final dateController = TextEditingController();
   final noteController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   @override
   void dispose() {
     assetController.dispose();
@@ -26,8 +31,6 @@ class _AddAssetState extends State<AddAsset> {
     quantityController.dispose();
     dateController.dispose();
     noteController.dispose();
-    // ignore: avoid_print
-    //print('Dispose used');
     super.dispose();
   }
 
@@ -39,8 +42,9 @@ class _AddAssetState extends State<AddAsset> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
+      // Same display format as the rest of the app, for example 12 Mar 2025.
       dateController.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+          '${picked.day.toString().padLeft(2, '0')} ${_months[picked.month - 1]} ${picked.year}';
     }
   }
 
@@ -60,24 +64,22 @@ class _AddAssetState extends State<AddAsset> {
     return null;
   }
 
-  final formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-
+        toolbarHeight: 52,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, size: 32),
-
-          onPressed: () {
-            // handle the press
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.chevron_left, size: 28),
+          onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Add asset'),
+        title: const Text(
+          'Add asset',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -88,204 +90,74 @@ class _AddAssetState extends State<AddAsset> {
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Category',
-                          style: TextStyle(color: colors.onSurfaceVariant),
+                        const SizedBox(height: 4),
+                        const FieldLabel('Category'),
+                        FilterChips(
+                          labels: listCategories,
+                          selected: selectedIndex,
+                          onSelected: (i) => setState(() => selectedIndex = i),
                         ),
                         const SizedBox(height: 16),
-                        SizedBox(
-                          height: 50,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: listCategories.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: 16),
-                            itemBuilder: (context, index) {
-                              final isSelected = selectedIndex == index;
-
-                              return ChoiceChip(
-                                label: Text(listCategories[index]),
-                                selected: isSelected,
-                                showCheckmark: false,
-                                backgroundColor: Colors.transparent,
-                                selectedColor: Colors.transparent,
-                                surfaceTintColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: BorderSide(
-                                    color: isSelected
-                                        ? colors.primary
-                                        : colors.outline,
-                                    width: isSelected ? 2 : 1.5,
-                                  ),
-                                ),
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? colors.onSurface
-                                      : colors.onSurfaceVariant,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                onSelected: (_) {
-                                  setState(() => selectedIndex = index);
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Asset name',
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const FieldLabel('Asset name'),
                         TextFormField(
                           controller: assetController,
                           keyboardType: TextInputType.text,
-
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: colors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: colors.outline),
-                            ),
-
+                          decoration: const InputDecoration(
                             hintText: 'Dangote Cement',
                           ),
-                          // Auto validate the email field when the user interacts with it
                           autovalidateMode: AutovalidateMode.onUserInteraction,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required'; // Return an error message if the email is empty
-                            }
-                            return null; // Return null if the email is valid
-                          },
+                          validator: required,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Symbol (optional)',
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const FieldLabel('Symbol (optional)'),
                         TextFormField(
                           controller: symbolController,
                           keyboardType: TextInputType.text,
-
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: colors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: colors.outline),
-                            ),
-
-                            hintText: '',
-                          ),
-                          // Auto validate the email field when the user interacts with it
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
                         ),
                         const SizedBox(height: 16),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // label, gap, field go here
-                                  Text(
-                                    'Quantity',
-                                    style: TextStyle(
-                                      color: colors.onSurfaceVariant,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
+                                  const FieldLabel('Quantity'),
                                   TextFormField(
                                     controller: quantityController,
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
-
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: colors.surface,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide(
-                                          color: colors.outline,
-                                        ),
-                                      ),
-
-                                      hintText: '',
-                                    ),
-                                    // Auto validate the email field when the user interacts with it
                                     autovalidateMode:
                                         AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      return positiveNumber(value);
-                                    },
+                                    validator: positiveNumber,
                                   ),
                                 ],
                               ),
                             ),
-                            // gap goes here
-                            const SizedBox(width: 8),
-                            // second Expanded goes here
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // label, gap, field go here
-                                  Text(
-                                    'Price per unit',
-                                    style: TextStyle(
-                                      color: colors.onSurfaceVariant,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
+                                  const FieldLabel('Price per unit'),
                                   TextFormField(
                                     controller: unitPriceController,
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
-
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: colors.surface,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide(
-                                          color: colors.outline,
-                                        ),
-                                      ),
-
-                                      hintText: '',
+                                    decoration: const InputDecoration(
+                                      prefixText: '\$',
                                     ),
-                                    // Auto validate the email field when the user interacts with it
                                     autovalidateMode:
                                         AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      return positiveNumber(
-                                        value,
-                                      ); // Return null if the email is valid
-                                    },
+                                    validator: positiveNumber,
                                   ),
                                 ],
                               ),
@@ -293,69 +165,27 @@ class _AddAssetState extends State<AddAsset> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Date added',
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const FieldLabel('Date added'),
                         TextFormField(
                           controller: dateController,
-                          keyboardType: TextInputType.text,
-
+                          readOnly: true,
+                          onTap: pickDate,
                           decoration: InputDecoration(
                             suffixIcon: IconButton(
-                              icon: Icon(Icons.calendar_today_outlined),
-                              onPressed: () {
-                                pickDate();
-                              },
+                              icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                              onPressed: pickDate,
                             ),
-                            filled: true,
-                            fillColor: colors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: colors.outline),
-                            ),
-
-                            hintText: '',
                           ),
-                          // Auto validate the email field when the user interacts with it
                           autovalidateMode: AutovalidateMode.onUserInteraction,
-                          validator: (value) {
-                            return required(
-                              value,
-                            ); // Return null if the email is valid
-                          },
+                          validator: required,
                         ),
-
-                        Text(
-                          'Note (optional)',
-                          style: TextStyle(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
+                        const FieldLabel('Notes (optional)'),
                         TextFormField(
                           controller: noteController,
                           keyboardType: TextInputType.text,
-
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: colors.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: colors.outline),
-                            ),
-
-                            hintText: '',
-                          ),
-                          // Auto validate the email field when the user interacts with it
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
                         ListenableBuilder(
                           listenable: Listenable.merge([
                             quantityController,
@@ -371,7 +201,7 @@ class _AddAssetState extends State<AddAsset> {
                             return Row(
                               children: [
                                 Text(
-                                  'Total value',
+                                  'Total cost',
                                   style: TextStyle(
                                     color: colors.onSurfaceVariant,
                                     fontSize: 14,
@@ -380,48 +210,24 @@ class _AddAssetState extends State<AddAsset> {
                                 const Spacer(),
                                 Text(
                                   '\$${total.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    color: colors.onSurface,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             );
                           },
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                child: TouchableOpacity(
-                  onTap: () {
-                    save();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Save asset',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  ),
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: AppButton(label: 'Save asset', onTap: save),
               ),
             ],
           ),

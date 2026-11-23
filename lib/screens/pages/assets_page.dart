@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:asset_app/theme/app_theme.dart';
-import 'package:asset_app/touchable_opacity.dart';
-import 'package:asset_app/screens/pages/detailPage.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:asset_app/screens/pages/detailPage.dart';
+import 'package:asset_app/components/app_widgets.dart';
 class AssetsScreen extends StatefulWidget {
   const AssetsScreen({Key? key}) : super(key: key);
 
@@ -20,6 +18,8 @@ class _AssetsScreenState extends State<AssetsScreen> {
     'Cash',
   ];
   int selectedIndex = 0;
+  String query = '';
+
   final List<Map<String, dynamic>> data = [
     {
       'name': 'Apple Inc',
@@ -59,7 +59,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
       'GainLoss': Icons.arrow_drop_up,
       'value': '5,000.00',
       'percent': '3.6',
-      'quantity': '50 Units',
+      'quantity': '50 units',
       'Color': const Color(0xFF0ECB81),
       'category': 'Bonds',
       'ticker': 'TBF',
@@ -135,253 +135,97 @@ class _AssetsScreenState extends State<AssetsScreen> {
     },
   ];
 
+  List<Map<String, dynamic>> get filtered {
+    final category = listCategories[selectedIndex];
+    final q = query.trim().toLowerCase();
+    return data.where((item) {
+      final matchesCategory = category == 'All' || item['category'] == category;
+      final matchesQuery =
+          q.isEmpty || (item['name'] as String).toLowerCase().contains(q);
+      return matchesCategory && matchesQuery;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    /*  // 1. Master list (never modified)
-  final List<Map<String, dynamic>> _allItems = [
-    {'code': 'USD', 'name': 'US Dollar', 'icon': Icons.attach_money},
-    {'code': 'NGN', 'name': 'Nigerian Naira', 'icon': Icons.payments_outlined},
-    {'code': 'EUR', 'name': 'Euro', 'icon': Icons.euro},
-    {'code': 'GBP', 'name': 'British Pound', 'icon': Icons.currency_pound},
-    {'code': 'JPY', 'name': 'Japanese Yen', 'icon': Icons.currency_yen},
-    {'code': 'CASH', 'name': 'Cash Payment', 'icon': Icons.money},
-  ]; */
-
-    final extraColors = Theme.of(context).extension<AppExtraColors>()!;
+    final items = filtered;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: 56,
         title: const Text('Assets'),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add, size: 22),
             onPressed: () {
-              // handle the press
+              // TODO: open the Add asset screen
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // update  so it can be used to search for assets in the list
-
+                TextField(
+                  onChanged: (value) => setState(() => query = value),
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search, size: 18),
+                    hintText: 'Search by name',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilterChips(
+                  labels: listCategories,
+                  selected: selectedIndex,
+                  onSelected: (i) => setState(() => selectedIndex = i),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(
-                      child: SearchAnchor(
-                        builder:
-                            (
-                              BuildContext context,
-                              SearchController controller,
-                            ) {
-                              return SearchBar(
-                                controller: controller,
-                                padding:
-                                    const WidgetStatePropertyAll<EdgeInsets>(
-                                      EdgeInsets.symmetric(horizontal: 16.0),
-                                    ),
-                                onTap: () {
-                                  controller.openView();
-                                },
-                                onChanged: (_) {
-                                  controller.openView();
-                                },
-                                leading: const Icon(Icons.search),
-                              );
-                            },
-                        suggestionsBuilder:
-                            (
-                              BuildContext context,
-                              SearchController controller,
-                            ) {
-                              final query = controller.text.toLowerCase();
-                              final filtered = data.where(
-                                (item) =>
-                                    item['name'].toLowerCase().contains(query),
-                              );
-
-                              return filtered.map((data) {
-                                return ListTile(
-                                  title: Text(data['name'] as String),
-                                  onTap: () {
-                                    setState(() {
-                                      controller.closeView(
-                                        data['name'] as String,
-                                      );
-                                    });
-                                  },
-                                );
-                              });
-                            },
+                    Text(
+                      '${items.length} assets',
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 13,
                       ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.swap_vert, size: 16),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Value, high to low',
+                      style: TextStyle(fontSize: 13),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 50,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: listCategories.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 16),
-                    itemBuilder: (context, index) {
-                      final isSelected = selectedIndex == index;
-
-                      return ChoiceChip(
-                        label: Text(listCategories[index]),
-                        selected: isSelected,
-                        showCheckmark: false,
-                        backgroundColor: Colors.transparent,
-                        selectedColor: Colors.transparent,
-                        surfaceTintColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isSelected ? colors.primary : colors.outline,
-                            width: isSelected ? 2 : 1.5,
-                          ),
+                const SizedBox(height: 4),
+                for (int i = 0; i < items.length; i++)
+                  AssetRow(
+                    name: items[i]['name'] as String,
+                    subtitle: items[i]['quantity'] as String,
+                    value: '\$${items[i]['value']}',
+                    up: items[i]['GainLoss'] == Icons.arrow_drop_up,
+                    percent: '${items[i]['percent']}%',
+                    color: items[i]['Color'] as Color,
+                    icon: items[i]['icon'] as IconData,
+                    showDivider: i != items.length - 1,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => detailPage(asset: items[i]),
                         ),
-                        labelStyle: TextStyle(
-                          color: isSelected
-                              ? colors.onSurface
-                              : colors.onSurfaceVariant,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) {
-                          setState(() => selectedIndex = index);
-                        },
                       );
                     },
                   ),
-                ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      '11 Assets',
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.swap_vert),
-                    Text('Value,high to low'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(8),
-                  itemCount: data.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                detailPage(asset: data[index]),
-                          ),
-                        );
-                      },
-                      leading: Container(
-                        width: 56,
-                        height: 56,
-
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: data[index]['Color'].withOpacity(0.5) as Color,
-
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          data[index]['icon'] as IconData,
-                          size: 32,
-                          color: data[index]['Color'] as Color,
-                        ),
-                      ),
-
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data[index]['name'] as String,
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            data[index]['quantity'] as String,
-                            style: TextStyle(
-                              color: colors.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\$${data[index]['value'] as String}',
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                data[index]['GainLoss'] as IconData,
-                                color:
-                                    data[index]['GainLoss'] ==
-                                        Icons.arrow_drop_up
-                                    ? extraColors.gain
-                                    : colors.error,
-                              ),
-                              Text(
-                                '${data[index]['percent'] as String}%',
-                                style: TextStyle(
-                                  color:
-                                      data[index]['GainLoss'] ==
-                                          Icons.arrow_drop_up
-                                      ? extraColors.gain
-                                      : colors.error,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  separatorBuilder: (context, int index) {
-                    return const SizedBox(
-                      height: 1.0,
-                      width: double.infinity,
-                      child: ColoredBox(color: Color(0xFF000000)),
-                    );
-                  },
-                ),
               ],
             ),
           ),

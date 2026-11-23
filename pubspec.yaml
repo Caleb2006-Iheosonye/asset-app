@@ -111,4 +111,5 @@ flutter_launcher_icons:
   image_path: "assets/icon/schema_icon_v2_1024.png"
   adaptive_icon_background: "assets/icon/schema_icon_v2_background.png"
   adaptive_icon_foreground: "assets/icon/schema_icon_v2_foreground.png"
+  adaptive_icon_foreground_inset: 0
   remove_alpha_ios: true
